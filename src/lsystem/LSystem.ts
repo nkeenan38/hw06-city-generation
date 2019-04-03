@@ -12,7 +12,7 @@ import PopulationCenter from './PopulationCenter';
 import {radians, degrees, angleBetweenLinesInRad} from '../globals';
 
 const HIGHWAY_LENGTH : number = .1;
-const ROAD_LENGTH : number = .025;
+const ROAD_LENGTH : number = .05;
 const RADIUS: number = 0.1;
 
 class LSystem 
@@ -29,6 +29,9 @@ class LSystem
 	populationCenters: PopulationCenter[] = [];
 	transformations: mat3[] = [];
 	populationThreshold: number = 0;
+
+	roadLengthEW = ROAD_LENGTH * 4;
+	roadLEngthNS = ROAD_LENGTH;
 
 	constructor(populationThreshold: number = 0, seaLevel: number = 0.5)
 	{
@@ -75,9 +78,9 @@ class LSystem
 			this.instance.roadType = RoadType.Road;
 		}
 		// add intersections
-		for (let i = -1; i <= 1; i += ROAD_LENGTH * 4)
+		for (let i = -1; i <= 1; i += this.roadLengthEW)
 		{
-			for (let j = -1; j <= 1; j += ROAD_LENGTH)
+			for (let j = -1; j <= 1; j += this.roadLEngthNS)
 			{
 				this.intersections.push(new Intersection(vec2.fromValues(i, j)));
 			}
@@ -127,7 +130,7 @@ class LSystem
 				// add initial road segment
 				this.transformations.push(this.instance.transformation());
 				this.instance.delay = 5;
-				while (distance > RADIUS) // causing infinite loop
+				while (distance > RADIUS) 
 				{
 					let road = new RoadSegment();
 					road.start = vec2.clone(this.instance.position);
@@ -161,22 +164,31 @@ class LSystem
 			{
 				continue;
 			}
-			if (this.terrain.density(vec2.fromValues(intersection.center[0], intersection.center[1] + ROAD_LENGTH * 2)) > threshold)
+			if (this.terrain.density(vec2.fromValues(intersection.center[0], intersection.center[1] + this.roadLEngthNS / 2)) > threshold)
 			{
 				intersection.N = true;
+				dir = vec2.fromValues(1.0, 0.0);
+				let angle: number = degrees(angleBetweenLinesInRad(vec2.create(), turtle.orientation, vec2.create(), dir));
+				turtle.rotate(angle);
 				this.transformations.push(turtle.transformation());
 			}
-			// check if an East road can be built
-			if (this.terrain.density(vec2.fromValues(intersection.center[0] + ROAD_LENGTH * 2, intersection.center[1])) > threshold)
+			// // check if an East road can be built
+			if (this.terrain.density(vec2.fromValues(intersection.center[0] + this.roadLengthEW / 2, intersection.center[1])) > threshold)
 			{
 				intersection.E = true;
 				dir = vec2.fromValues(1.0, 0.0);
 				let angle: number = degrees(angleBetweenLinesInRad(vec2.create(), turtle.orientation, vec2.create(), dir));
 				turtle.rotate(angle);
 				this.transformations.push(turtle.transformation());
+				if (this.terrain.density(vec2.fromValues(intersection.center[0] + this.roadLengthEW / 2, intersection.center[1])) > threshold)
+				{
+					let nextRoad = Turtle.clone(turtle);
+					nextRoad.translate(ROAD_LENGTH);
+					this.transformations.push(nextRoad.transformation());
+				}
 			}
-			// check if a South road can be built
-			if (this.terrain.density(vec2.fromValues(intersection.center[0], intersection.center[1] - ROAD_LENGTH * 2)) > threshold)
+			// // check if a South road can be built
+			if (this.terrain.density(vec2.fromValues(intersection.center[0], intersection.center[1] - this.roadLEngthNS / 2)) > threshold)
 			{
 				intersection.S = true;
 				dir = vec2.fromValues(0.0, -1.0);
@@ -185,13 +197,16 @@ class LSystem
 				this.transformations.push(turtle.transformation());
 			}
 			// check if a West road can be built
-			if (this.terrain.density(vec2.fromValues(intersection.center[0] - ROAD_LENGTH * 2, intersection.center[1])) > threshold)
+			if (this.terrain.density(vec2.fromValues(intersection.center[0] - this.roadLengthEW / 2, intersection.center[1])) > threshold)
 			{
 				intersection.W = true;
 				dir = vec2.fromValues(-1.0, 0.0);
 				let angle: number = degrees(angleBetweenLinesInRad(vec2.create(), turtle.orientation, vec2.create(), dir));
 				turtle.rotate(angle);
 				this.transformations.push(turtle.transformation());
+				let nextRoad = Turtle.clone(turtle);
+				nextRoad.translate(ROAD_LENGTH);
+				this.transformations.push(nextRoad.transformation());
 			}
 		}
 	}
@@ -200,10 +215,10 @@ class LSystem
 	{
 		let north = new RoadSegment();
 		north.start = intersection.center;
-		vec2.add(north.end, intersection.center, vec2.fromValues(0.0, ROAD_LENGTH));
+		vec2.add(north.end, intersection.center, vec2.fromValues(0.0, this.roadLEngthNS));
 		let east = new RoadSegment();
 		east.start = intersection.center;
-		vec2.add(east.end, intersection.center, vec2.fromValues(ROAD_LENGTH*4, 0.0));
+		vec2.add(east.end, intersection.center, vec2.fromValues(this.roadLengthEW, 0.0));
 		for (let highway of this.highways)
 		{
 			let [intersects, pos] = RoadSegment.getLineIntersection(highway, north);
@@ -218,10 +233,10 @@ class LSystem
 	{
 		let north = new RoadSegment();
 		north.start = intersection.center;
-		vec2.add(north.end, intersection.center, vec2.fromValues(0.0, ROAD_LENGTH));
+		vec2.add(north.end, intersection.center, vec2.fromValues(0.0, this.roadLEngthNS));
 		let west = new RoadSegment();
 		west.start = intersection.center;
-		vec2.add(west.end, intersection.center, vec2.fromValues(-ROAD_LENGTH, 0.0));
+		vec2.add(west.end, intersection.center, vec2.fromValues(-this.roadLengthEW, 0.0));
 		for (let highway of this.highways)
 		{
 			let [intersects, pos] = RoadSegment.getLineIntersection(highway, north);
@@ -242,26 +257,28 @@ class LSystem
 			{
 				if (intersection.E && this.canBuildNE(intersection))
 				{
-					let center = vec2.fromValues(intersection.center[0] + 0.0125, intersection.center[1] + 0.0125);
-					let height = Math.pow(this.terrain.density(center), 3.0);
-					if (height > 0)
+					let rand1 = Math.random() * 0.05;
+					let rand2 = Math.random() * 0.025;
+					let center = vec2.fromValues(intersection.center[0] + 0.0125 + rand1, intersection.center[1] + 0.0125 + rand2);
+					let density = this.terrain.density(center);
+					if (density > 0)
 					{
-						let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
-												0.0, 1.0, 0.0, 0.0,
-												0.0, 0.0, height, 0.0,
-												center[0], center[1], 0.0, 1.0);
-						transformations.push(T);
+						// let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
+						// 						0.0, 1.0, 0.0, 0.0,
+						// 						0.0, 0.0, height, 0.0,
+						// 						center[0], center[1], 0.0, 1.0);
+						transformations = transformations.concat(this.createBuilding(center, density));
 					}
-					center = vec2.fromValues(intersection.center[0] + 0.0375, intersection.center[1] + 0.0125);
-					height = Math.pow(this.terrain.density(center), 3.0);
-					if (height > 0)
-					{
-						let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
-												0.0, 1.0, 0.0, 0.0,
-												0.0, 0.0, height, 0.0,
-												center[0], center[1], 0.0, 1.0);
-						transformations.push(T);
-					}
+					// center = vec2.fromValues(intersection.center[0] + 0.0375, intersection.center[1] + 0.0125);
+					// height = Math.pow(this.terrain.density(center), 3.0);
+					// if (height > 0)
+					// {
+					// 	let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
+					// 							0.0, 1.0, 0.0, 0.0,
+					// 							0.0, 0.0, height, 0.0,
+					// 							center[0], center[1], 0.0, 1.0);
+					// 	transformations.push(T);
+					// }
 				}
 				// if (intersection.W && this.canBuildNW(intersection))
 				// {
@@ -287,6 +304,50 @@ class LSystem
 				// 	}
 				// }
 			}
+		}
+		return transformations;
+	}
+	
+
+	createBuilding(center: vec2, density: number) : mat4[]
+	{
+		let transformations: mat4[] = [];
+		if (density > 0.6)			// City center, skyscrapers
+		{
+			let height = density * 2;
+			let T = mat4.fromValues(0.125, 0.0, 0.0, 0.0,
+									0.0, 0.125, 0.0, 0.0,
+									0.0, 0.0, height, 0.0,
+									center[0], center[1], 0.0, 1.0);
+			transformations.push(T);
+			T = mat4.fromValues(0.5, 0.0, 0.0, 0.0,
+								0.0, 0.5, 0.0, 0.0,
+								0.0, 0.0, height / 1.25, 0.0,
+								center[0], center[1], 0.0, 1.0);
+			transformations.push(T);
+			T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
+								0.0, 1.0, 0.0, 0.0,
+								0.0, 0.0, height / 2, 0.0,
+								center[0], center[1], 0.0, 1.0);
+			transformations.push(T);
+		}
+		else if (density > 0.5)		// longer, buildings, but shorter
+		{
+			let height = density;
+			let T = mat4.fromValues(1.5, 0.0, 0.0, 0.0,
+									0.0, 1.5, 0.0, 0.0,
+									0.0, 0.0, height, 0.0,
+									center[0], center[1], 0.0, 1.0);
+			transformations.push(T);
+		}
+		else						// one, to two stories
+		{
+			let height = density / 2;
+			let T = mat4.fromValues(3.0, 0.0, 0.0, 0.0,
+									0.0, 1.0, 0.0, 0.0,
+									0.0, 0.0, height, 0.0,
+									center[0], center[1], 0.0, 1.0);
+			transformations.push(T);
 		}
 		return transformations;
 	}

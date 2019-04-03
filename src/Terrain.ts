@@ -130,6 +130,7 @@ class Terrain
 
 	density(x: vec2) : number
 	{
+		if (x[0] < -1 || x[0] > 1 || x[1] < -1 || x[1] > 1) return 0;
 		let terrainSeed = vec2.fromValues(3.33, 6);
   		let populationSeed = vec2.fromValues(6.53, 4.123);	
   		let tval = vec2.create();
