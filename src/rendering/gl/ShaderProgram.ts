@@ -44,6 +44,7 @@ class ShaderProgram {
   unifTerrainType: WebGLUniformLocation;
   unifPopulationType: WebGLUniformLocation;
   unifSeaLevel: WebGLUniformLocation;
+  unifBuildingType: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
@@ -78,6 +79,7 @@ class ShaderProgram {
     this.unifTerrainType = gl.getUniformLocation(this.prog, "u_TerrainType");
     this.unifPopulationType = gl.getUniformLocation(this.prog, "u_PopulationType");
     this.unifSeaLevel = gl.getUniformLocation(this.prog, "u_SeaLevel");
+    this.unifBuildingType = gl.getUniformLocation(this.prog, "u_BuildingType");
   }
 
   use() {
@@ -164,6 +166,15 @@ class ShaderProgram {
     if (this.unifSeaLevel !== -1)
     {
       gl.uniform1f(this.unifSeaLevel, t);
+    }
+  }
+
+  setBuildingType(t: number)
+  {
+    this.use();
+    if (this.unifBuildingType !== -1)
+    {
+      gl.uniform1i(this.unifBuildingType, t);
     }
   }
 

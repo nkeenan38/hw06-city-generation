@@ -247,107 +247,191 @@ class LSystem
 		return true;
 	}
 
-	getBuildings() : mat4[]
+	// each initial index is for buiilding type (high, medium, low)
+	// each of these have indexes for transformation matrices for eaach prism (rectangular, the pentagon, hexagonal, the octagon)
+	getBuildings() : [[mat4[], mat4[], mat4[], mat4[]],[mat4[], mat4[], mat4[], mat4[]],[mat4[], mat4[], mat4[], mat4[]]]
 	{
-		let transformations : mat4[] = []
+		let transformations : [[mat4[], mat4[], mat4[], mat4[]],[mat4[], mat4[], mat4[], mat4[]],[mat4[], mat4[], mat4[], mat4[]]]
+		                    = [[[],[],[],[]],[[],[],[],[]],[[],[],[],[]]]
 		let threshold = HIGHWAY_LENGTH / 2;
 		for (let intersection of this.intersections)
 		{
 			if (intersection.N)
 			{
-				if (intersection.E && this.canBuildNE(intersection))
+				if (intersection.E && this.canBuildNE(intersection) && this.canBuildNW(intersection))
 				{
-					let rand1 = Math.random() * 0.05;
-					let rand2 = Math.random() * 0.025;
-					let center = vec2.fromValues(intersection.center[0] + 0.0125 + rand1, intersection.center[1] + 0.0125 + rand2);
-					let density = this.terrain.density(center);
-					if (density > 0)
+					let rand1 = Math.random() * 0.1;
+					let rand2 = Math.random() * 0;
+					let center = vec2.fromValues(intersection.center[0] + 0.025 + rand1, intersection.center[1] + 0.025 + rand2);
+					let intersects = false;
+					for (let highway of this.highways)
 					{
-						// let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
-						// 						0.0, 1.0, 0.0, 0.0,
-						// 						0.0, 0.0, height, 0.0,
-						// 						center[0], center[1], 0.0, 1.0);
-						transformations = transformations.concat(this.createBuilding(center, density));
+						if (vec2.distance(highway.start, center) < 0.05 || vec2.distance(highway.end, center) < 0.05)
+						{
+							intersects = true;
+							break;
+						}
 					}
-					// center = vec2.fromValues(intersection.center[0] + 0.0375, intersection.center[1] + 0.0125);
-					// height = Math.pow(this.terrain.density(center), 3.0);
-					// if (height > 0)
-					// {
-					// 	let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
-					// 							0.0, 1.0, 0.0, 0.0,
-					// 							0.0, 0.0, height, 0.0,
-					// 							center[0], center[1], 0.0, 1.0);
-					// 	transformations.push(T);
-					// }
+					if (intersects) continue;
+					let density = this.terrain.density(center);
+					if (density > 0.6)
+					{
+						let [rt, pt, ht, ot] = this.createBuilding(center, density);
+						transformations[0][0] = transformations[0][0].concat(rt);
+						transformations[0][1] = transformations[0][1].concat(pt);
+						transformations[0][2] = transformations[0][2].concat(ht);
+						transformations[0][3] = transformations[0][3].concat(ot);
+					}
+					else if (density > 0.5)
+					{
+						let [rt, pt, ht, ot] = this.createBuilding(center, density);
+						transformations[1][0] = transformations[1][0].concat(rt);
+						transformations[1][1] = transformations[1][1].concat(pt);
+						transformations[1][2] = transformations[1][2].concat(ht);
+						transformations[1][3] = transformations[1][3].concat(ot);
+					}
+					else
+					{
+						let [rt, pt, ht, ot] = this.createBuilding(center, density);
+						transformations[2][0] = transformations[2][0].concat(rt);
+						transformations[2][1] = transformations[2][1].concat(pt);
+						transformations[2][2] = transformations[2][2].concat(ht);
+						transformations[2][3] = transformations[2][3].concat(ot);
+					}
+					center = vec2.fromValues(intersection.center[0] + 0.1 + (0.1 * Math.abs(rand1)), intersection.center[1] + 0.025 - rand2);
+					intersects = false;
+					for (let highway of this.highways)
+					{
+						if (vec2.distance(highway.start, center) < 0.05 || vec2.distance(highway.end, center) < 0.05)
+						{
+							intersects = true;
+							break;
+						}
+					}
+					if (intersects) continue;
+					density = this.terrain.density(center);
+					if (density > 0.6)
+					{
+						let [rt, pt, ht, ot] = this.createBuilding(center, density);
+						transformations[0][0] = transformations[0][0].concat(rt);
+						transformations[0][1] = transformations[0][1].concat(pt);
+						transformations[0][2] = transformations[0][2].concat(ht);
+						transformations[0][3] = transformations[0][3].concat(ot);
+					}
+					else if (density > 0.5)
+					{
+						let [rt, pt, ht, ot] = this.createBuilding(center, density);
+						transformations[1][0] = transformations[1][0].concat(rt);
+						transformations[1][1] = transformations[1][1].concat(pt);
+						transformations[1][2] = transformations[1][2].concat(ht);
+						transformations[1][3] = transformations[1][3].concat(ot);
+					}
+					else
+					{
+						let [rt, pt, ht, ot] = this.createBuilding(center, density);
+						transformations[2][0] = transformations[2][0].concat(rt);
+						transformations[2][1] = transformations[2][1].concat(pt);
+						transformations[2][2] = transformations[2][2].concat(ht);
+						transformations[2][3] = transformations[2][3].concat(ot);
+					}
 				}
-				// if (intersection.W && this.canBuildNW(intersection))
-				// {
-				// 	let center = vec2.fromValues(intersection.center[0] - 0.0125, intersection.center[1] + 0.0125);
-				// 	let height = Math.pow(this.terrain.density(center), 3.0);
-				// 	if (height > 0)
-				// 	{
-				// 		let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
-				// 								0.0, 1.0, 0.0, 0.0,
-				// 								0.0, 0.0, height, 0.0,
-				// 								center[0], center[1], 0.0, 1.0);
-				// 		transformations.push(T);
-				// 	}
-				// 	center = vec2.fromValues(intersection.center[0] - 0.0375, intersection.center[1] + 0.0125);
-				// 	height = Math.pow(this.terrain.density(center), 3.0);
-				// 	if (height > 0)
-				// 	{
-				// 		let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
-				// 								0.0, 1.0, 0.0, 0.0,
-				// 								0.0, 0.0, height, 0.0,
-				// 								center[0], center[1], 0.0, 1.0);
-				// 		transformations.push(T);
-				// 	}
-				// }
 			}
 		}
 		return transformations;
 	}
+
+	randShape() : number
+	{
+		let rand = Math.random();
+		return (rand < 0.25) ? 0 :
+			   (rand < 0.5)  ? 1 :
+			   (rand < 0.75) ? 2 : 3;
+	}
 	
 
-	createBuilding(center: vec2, density: number) : mat4[]
+	createBuilding(center: vec2, density: number) : [mat4[], mat4[], mat4[], mat4[]]
 	{
-		let transformations: mat4[] = [];
+		let transformations: [mat4[], mat4[], mat4[], mat4[]] = [[],[],[],[]];
 		if (density > 0.6)			// City center, skyscrapers
 		{
-			let height = density * 2;
-			let T = mat4.fromValues(0.125, 0.0, 0.0, 0.0,
-									0.0, 0.125, 0.0, 0.0,
-									0.0, 0.0, height, 0.0,
-									center[0], center[1], 0.0, 1.0);
-			transformations.push(T);
-			T = mat4.fromValues(0.5, 0.0, 0.0, 0.0,
-								0.0, 0.5, 0.0, 0.0,
-								0.0, 0.0, height / 1.25, 0.0,
-								center[0], center[1], 0.0, 1.0);
-			transformations.push(T);
-			T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
+			let height = density / 10;
+			let T = mat4.fromValues(0.06125, 0.0, 0.0, 0.0,
+									0.0, 0.06125, 0.0, 0.0,
+									0.0, 0.0, 1.0, 0.0,
+									center[0], center[1], height * 4, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.35, 0.0, 0.0, 0.0,
+								0.0, 0.35, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], height * 3, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.35, 0.0, 0.0, 0.0,
+								0.0, 0.35, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], height * 2, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.35, 0.0, 0.0, 0.0,
+								0.0, 0.35, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], height, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.35, 0.0, 0.0, 0.0,
+								0.0, 0.35, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], 0, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.65, 0.0, 0.0, 0.0,
+								0.0, 0.65, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], height * 2, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.65, 0.0, 0.0, 0.0,
+								0.0, 0.65, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], height, 1.0);
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(0.65, 0.0, 0.0, 0.0,
+								0.0, 0.65, 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0], center[1], 0, 1.0);
+			transformations[this.randShape()].push(T);
+			let randx = (Math.random() - 0.5) * 0.0125;
+			T = mat4.fromValues(1.25 + randx * 10, 0.0, 0.0, 0.0,
 								0.0, 1.0, 0.0, 0.0,
-								0.0, 0.0, height / 2, 0.0,
-								center[0], center[1], 0.0, 1.0);
-			transformations.push(T);
+								0.0, 0.0, 1.0, 0.0,
+								center[0] + randx, center[1], height, 1.0);
+			let shape = this.randShape();
+			transformations[this.randShape()].push(T);
+			T = mat4.fromValues(1.9 + Math.abs(randx) * 500, 0.0, 0.0, 0.0,
+								0.0, 1.9 , 0.0, 0.0,
+								0.0, 0.0, 1.0, 0.0,
+								center[0] + randx, center[1], 0.0, 1.0);
+			transformations[this.randShape()].push(T);
 		}
 		else if (density > 0.5)		// longer, buildings, but shorter
 		{
-			let height = density;
-			let T = mat4.fromValues(1.5, 0.0, 0.0, 0.0,
-									0.0, 1.5, 0.0, 0.0,
+			let height = Math.pow(density, 3) * 2;
+			let randx = (Math.random() - 0.5) * 0.0125;
+			let shape = this.randShape();
+			let T = mat4.fromValues(1.0, 0.0, 0.0, 0.0,
+								0.0, 2.0, 0.0, 0.0,
+								0.0, 0.0, height, 0.0,
+								center[0] + randx, center[1], 0.0, 1.0);
+			transformations[shape].push(T);
+			T = mat4.fromValues(2.0, 0.0, 0.0, 0.0,
+									0.0, 1.0, 0.0, 0.0,
 									0.0, 0.0, height, 0.0,
-									center[0], center[1], 0.0, 1.0);
-			transformations.push(T);
+									center[0] - randx, center[1], 0.0, 1.0);
+			transformations[this.randShape()].push(T);
 		}
 		else						// one, to two stories
 		{
-			let height = density / 2;
+			let height = density / 5;
 			let T = mat4.fromValues(3.0, 0.0, 0.0, 0.0,
 									0.0, 1.0, 0.0, 0.0,
 									0.0, 0.0, height, 0.0,
 									center[0], center[1], 0.0, 1.0);
-			transformations.push(T);
+			transformations[0].push(T);
 		}
 		return transformations;
 	}
