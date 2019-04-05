@@ -4,7 +4,7 @@ Project by Nicholas Keenan. Pennkey: nkeenan.
 Demo Link: https://nkeenan38.github.io/hw06-city-generation/
 
 ## Terrain and Population Generation
-Terrain and population were generated on both the CPU and GPU using fractal brownian motion. Terrain height below a threshold si treated as water, and the population for these regions is set to 0. The threshold for sea level can be controlled. 
+Terrain and population were generated on both the CPU and GPU using fractal brownian motion. Terrain height below a threshold is treated as water, and the population for these regions is set to 0. The threshold for sea level can be controlled. 
 
 Terrain and population density each have 3 viewing options. 'Detailed' shows a smooth terrain map and population map, with the population at each pixel precisely described by their corresponding color. The next option, 'Simple' shows only land and water regions for the terrain, with no extra information about terrain height. 'Simple' for population density separates the population map into discrete values in increments of 0.1. I find this view makes the population map more easily readable. Finally, both have a 'None' option that displays no color data.
 
