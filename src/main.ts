@@ -283,31 +283,30 @@ function main() {
     flat.setTime(time++);
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.clear();
-    // renderer.render(camera, flat, [screenQuad]);
-    // renderer.render(camera, roadShader, [road]);
-    // background.setEyeRefUp(camera.controls.eye, camera.direction, camera.up);
-    renderer.render(camera, background, [flatSquare]);
+    renderer.render(camera, flat, [screenQuad]);
+    renderer.render(camera, roadShader, [road]);
+    renderer.render(camera, background, [square]);
 
-    // buildingShader.setBuildingType(0);
-    // renderer.render(camera, buildingShader, [
-    //   highBuildings[0],
-    //   highBuildings[1],
-    //   highBuildings[2],
-    //   highBuildings[3]]);
+    buildingShader.setBuildingType(0);
+    renderer.render(camera, buildingShader, [
+      highBuildings[0],
+      highBuildings[1],
+      highBuildings[2],
+      highBuildings[3]]);
 
-    // buildingShader.setBuildingType(1);
-    // renderer.render(camera, buildingShader, [
-    //   medBuildings[0],
-    //   medBuildings[1],
-    //   medBuildings[2],
-    //   medBuildings[3]]);
+    buildingShader.setBuildingType(1);
+    renderer.render(camera, buildingShader, [
+      medBuildings[0],
+      medBuildings[1],
+      medBuildings[2],
+      medBuildings[3]]);
 
-    // buildingShader.setBuildingType(2);
-    // renderer.render(camera, buildingShader, [
-    //   lowBuildings[0],
-    //   lowBuildings[1],
-    //   lowBuildings[2],
-    //   lowBuildings[3]]);
+    buildingShader.setBuildingType(2);
+    renderer.render(camera, buildingShader, [
+      lowBuildings[0],
+      lowBuildings[1],
+      lowBuildings[2],
+      lowBuildings[3]]);
 
     stats.end();
 
